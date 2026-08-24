@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, TrendingDown, ChevronRight, AlertTriangle, Activity, BarChart2 } from 'lucide-react';
+import { Star, TrendingDown, ChevronRight, AlertTriangle, BarChart2 } from 'lucide-react';
 import type { ScanResult } from '../types/stock';
 
 interface StockCardProps {

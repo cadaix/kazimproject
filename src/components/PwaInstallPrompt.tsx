@@ -16,8 +16,6 @@ export const PwaInstallPrompt: React.FC<PwaInstallPromptProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
       <div className="relative w-full max-w-lg glass-panel rounded-3xl p-6 border border-slate-700/80 shadow-2xl overflow-hidden">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, TrendingDown, AlertTriangle, ArrowUpRight, Calendar, Layers, ShieldCheck, Activity } from 'lucide-react';
+import { X, AlertTriangle, ArrowUpRight, Calendar, Activity } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import type { ScanResult } from '../types/stock';
 
@@ -18,10 +18,10 @@ export const StockDetailModal: React.FC<StockDetailModalProps> = ({
 }) => {
   if (!scanResult) return null;
 
-  const { stock, candles, indicatorHistory, latestIndicators, consecutiveDaysBelow, isMatchingTargetDays } = scanResult;
+  const { stock, indicatorHistory, latestIndicators, consecutiveDaysBelow, isMatchingTargetDays } = scanResult;
 
   // Prepare chart data (last 30 trading days)
-  const chartData = indicatorHistory.slice(-30).map((ind, idx) => ({
+  const chartData = indicatorHistory.slice(-30).map((ind) => ({
     date: ind.date.slice(5), // MM-DD
     fullDate: ind.date,
     Kapanış: ind.close,

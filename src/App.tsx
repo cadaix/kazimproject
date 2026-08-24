@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Header } from './components/Header';
 import { FilterBar } from './components/FilterBar';
 import { StockCard } from './components/StockCard';
@@ -6,8 +6,8 @@ import { StockDetailModal } from './components/StockDetailModal';
 import { BottomNav } from './components/BottomNav';
 import { PwaInstallPrompt } from './components/PwaInstallPrompt';
 import { scanAllBistStocks } from './services/bistService';
-import type { FilterState, ScanResult, SectorFilter } from './types/stock';
-import { ShieldAlert, CheckCircle2, TrendingDown, Info, Layers, RefreshCw } from 'lucide-react';
+import type { FilterState, ScanResult } from './types/stock';
+import { ShieldAlert, Info, RefreshCw } from 'lucide-react';
 
 export function App() {
   // Scanned results state
@@ -212,7 +212,6 @@ export function App() {
         <FilterBar
           filters={filters}
           onFilterChange={(newF) => setFilters((prev) => ({ ...prev, ...newF }))}
-          matchingCount={totalMatchingSignalCount}
           totalCount={scanResults.length}
           watchlistCount={watchlist.length}
         />

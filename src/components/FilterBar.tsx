@@ -1,11 +1,10 @@
 import React from 'react';
-import { Search, Filter, Star, ArrowUpDown, Layers, SlidersHorizontal } from 'lucide-react';
+import { Search, Star, ArrowUpDown, Layers, SlidersHorizontal } from 'lucide-react';
 import type { FilterState, SectorFilter, SortOption } from '../types/stock';
 
 interface FilterBarProps {
   filters: FilterState;
   onFilterChange: (newFilters: Partial<FilterState>) => void;
-  matchingCount: number;
   totalCount: number;
   watchlistCount: number;
 }
@@ -29,7 +28,6 @@ const TARGET_DAYS_OPTIONS = [2, 3, 4, 5];
 export const FilterBar: React.FC<FilterBarProps> = ({
   filters,
   onFilterChange,
-  matchingCount,
   watchlistCount,
 }) => {
   return (
