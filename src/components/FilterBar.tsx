@@ -21,6 +21,8 @@ const SECTORS: { label: string; value: SectorFilter }[] = [
   { label: 'Otomotiv', value: 'Otomotiv' },
   { label: 'Madencilik', value: 'Madencilik' },
   { label: 'Telekom', value: 'Telekom' },
+  { label: 'Sağlık', value: 'Sağlık' },
+  { label: 'Hizmet', value: 'Hizmet' },
 ];
 
 const TARGET_DAYS_OPTIONS = [2, 3, 4, 5];

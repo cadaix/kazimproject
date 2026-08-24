@@ -42,7 +42,7 @@ export interface ScanResult {
   breakdownSeverity: 'HIGH' | 'MEDIUM' | 'LOW';
 }
 
-export type SectorFilter = 'ALL' | 'Havacılık' | 'Bankacılık' | 'Holding' | 'Sanayi' | 'Teknoloji' | 'Perakende' | 'Enerji' | 'Madencilik' | 'Otomotiv' | 'Telekom';
+export type SectorFilter = 'ALL' | 'Havacılık' | 'Bankacılık' | 'Holding' | 'Sanayi' | 'Teknoloji' | 'Perakende' | 'Enerji' | 'Madencilik' | 'Otomotiv' | 'Telekom' | 'Sağlık' | 'Hizmet' | 'Diğer' | string;
 
 export type SortOption = 'consecutiveDays' | 'changePercent' | 'distanceEma5' | 'symbol' | 'volume';
 

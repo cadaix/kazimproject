@@ -1,144 +1,344 @@
-import type { BistStock, Candle, ScanResult } from '../types/stock';
-import { calculateIndicators, getConsecutiveBelowDays } from '../utils/indicators';
+import type { BistStock, Candle, IndicatorValues, ScanResult } from '../types/stock';
 
-export const BIST_STOCKS: BistStock[] = [
-  { symbol: 'THYAO', name: 'Türk Hava Yolları', sector: 'Havacılık', price: 298.50, changePercent: -1.82, volume: 4850000000, high52w: 332.00, low52w: 215.00 },
-  { symbol: 'GARAN', name: 'Garanti BBVA', sector: 'Bankacılık', price: 114.20, changePercent: -2.40, volume: 3900000000, high52w: 135.00, low52w: 68.50 },
-  { symbol: 'EREGL', name: 'Ereğli Demir Çelik', sector: 'Sanayi', price: 46.80, changePercent: -0.95, volume: 2100000000, high52w: 58.40, low52w: 38.20 },
-  { symbol: 'ASELS', name: 'Aselsan', sector: 'Teknoloji', price: 62.40, changePercent: -3.10, volume: 3100000000, high52w: 74.50, low52w: 39.80 },
-  { symbol: 'BIMAS', name: 'BİM Mağazaları', sector: 'Perakende', price: 545.00, changePercent: 0.45, volume: 1800000000, high52w: 610.00, low52w: 312.00 },
-  { symbol: 'AKBNK', name: 'Akbank', sector: 'Bankacılık', price: 58.90, changePercent: -1.67, volume: 2950000000, high52w: 69.80, low52w: 32.10 },
-  { symbol: 'TUPRS', name: 'Tüpraş', sector: 'Enerji', price: 168.40, changePercent: -2.15, volume: 2600000000, high52w: 204.00, low52w: 128.50 },
-  { symbol: 'SISE', name: 'Şişecam', sector: 'Sanayi', price: 44.10, changePercent: -1.12, volume: 1450000000, high52w: 57.20, low52w: 39.50 },
-  { symbol: 'KCHOL', name: 'Koç Holding', sector: 'Holding', price: 212.00, changePercent: -0.85, volume: 2200000000, high52w: 258.00, low52w: 139.00 },
-  { symbol: 'SAHOL', name: 'Sabancı Holding', sector: 'Holding', price: 92.50, changePercent: -1.90, volume: 1900000000, high52w: 108.00, low52w: 54.00 },
-  { symbol: 'ISCTR', name: 'İş Bankası (C)', sector: 'Bankacılık', price: 13.85, changePercent: -2.12, volume: 2800000000, high52w: 17.50, low52w: 9.10 },
-  { symbol: 'YKBNK', name: 'Yapı Kredi Bankası', sector: 'Bankacılık', price: 31.40, changePercent: -3.08, volume: 2400000000, high52w: 39.80, low52w: 18.20 },
-  { symbol: 'PGSUS', name: 'Pegasus Hava Yolları', sector: 'Havacılık', price: 232.50, changePercent: -2.60, volume: 1750000000, high52w: 275.00, low52w: 160.00 },
-  { symbol: 'PETKM', name: 'Petkim', sector: 'Enerji', price: 19.80, changePercent: -0.75, volume: 1200000000, high52w: 26.40, low52w: 17.10 },
-  { symbol: 'KOZAL', name: 'Koza Altın', sector: 'Madencilik', price: 22.40, changePercent: -1.32, volume: 980000000, high52w: 31.00, low52w: 19.40 },
-  { symbol: 'FROTO', name: 'Ford Otosan', sector: 'Otomotiv', price: 1020.00, changePercent: -0.48, volume: 1400000000, high52w: 1240.00, low52w: 780.00 },
-  { symbol: 'TOASO', name: 'Tofaş Oto. Fab.', sector: 'Otomotiv', price: 248.00, changePercent: -2.74, volume: 1100000000, high52w: 325.00, low52w: 205.00 },
-  { symbol: 'KONTR', name: 'Kontrolmatik Teknoloji', sector: 'Teknoloji', price: 48.20, changePercent: -4.17, volume: 850000000, high52w: 102.00, low52w: 42.00 },
-  { symbol: 'TCELL', name: 'Turkcell', sector: 'Telekom', price: 98.40, changePercent: -1.00, volume: 1650000000, high52w: 115.00, low52w: 52.00 },
-  { symbol: 'SASA', name: 'Sasa Polyester', sector: 'Sanayi', price: 38.60, changePercent: -2.03, volume: 1300000000, high52w: 54.00, low52w: 34.00 },
-  { symbol: 'ASTOR', name: 'Astor Enerji', sector: 'Enerji', price: 89.20, changePercent: -3.45, volume: 1550000000, high52w: 138.00, low52w: 76.00 },
-  { symbol: 'EKGYO', name: 'Emlak Konut GYO', sector: 'Sanayi', price: 11.25, changePercent: -0.88, volume: 1900000000, high52w: 14.20, low52w: 6.80 },
-  { symbol: 'ALARK', name: 'Alarko Holding', sector: 'Holding', price: 104.50, changePercent: -1.60, volume: 890000000, high52w: 142.00, low52w: 88.00 },
-  { symbol: 'SOKM', name: 'Şok Marketler', sector: 'Perakende', price: 54.80, changePercent: 0.18, volume: 720000000, high52w: 72.00, low52w: 42.00 },
-  { symbol: 'TAVHL', name: 'TAV Havalimanları', sector: 'Havacılık', price: 268.00, changePercent: -1.47, volume: 830000000, high52w: 305.00, low52w: 172.00 },
-  { symbol: 'TTKOM', name: 'Türk Telekom', sector: 'Telekom', price: 51.20, changePercent: -1.35, volume: 1150000000, high52w: 62.00, low52w: 28.50 },
-  { symbol: 'HEKTS', name: 'Hektaş', sector: 'Sanayi', price: 14.10, changePercent: -2.76, volume: 640000000, high52w: 24.50, low52w: 12.80 },
-  { symbol: 'MAVI', name: 'Mavi Giyim', sector: 'Perakende', price: 108.00, changePercent: -0.92, volume: 610000000, high52w: 132.00, low52w: 64.00 },
-  { symbol: 'REEDR', name: 'Reeder Teknoloji', sector: 'Teknoloji', price: 28.40, changePercent: -5.33, volume: 920000000, high52w: 79.00, low52w: 22.00 }
-];
+const SECTOR_MAP: Record<string, string> = {
+  'Transportation': 'Havacılık',
+  'Finance': 'Bankacılık',
+  'Producer Manufacturing': 'Sanayi',
+  'Process Industries': 'Sanayi',
+  'Industrial Services': 'Sanayi',
+  'Consumer Durables': 'Sanayi',
+  'Electronic Technology': 'Teknoloji',
+  'Technology Services': 'Teknoloji',
+  'Retail Trade': 'Perakende',
+  'Consumer Non-Durables': 'Perakende',
+  'Consumer Services': 'Hizmet',
+  'Utilities': 'Enerji',
+  'Energy Minerals': 'Enerji',
+  'Non-Energy Minerals': 'Madencilik',
+  'Communications': 'Telekom',
+  'Health Technology': 'Sağlık',
+  'Health Services': 'Sağlık',
+  'Commercial Services': 'Holding'
+};
+
+// Known ticker specific sector adjustments
+const TICKER_SECTORS: Record<string, string> = {
+  'THYAO': 'Havacılık',
+  'PGSUS': 'Havacılık',
+  'TAVHL': 'Havacılık',
+  'GARAN': 'Bankacılık',
+  'AKBNK': 'Bankacılık',
+  'ISCTR': 'Bankacılık',
+  'YKBNK': 'Bankacılık',
+  'VAKBN': 'Bankacılık',
+  'HALKB': 'Bankacılık',
+  'KCHOL': 'Holding',
+  'SAHOL': 'Holding',
+  'ALARK': 'Holding',
+  'DOHOL': 'Holding',
+  'SISE': 'Sanayi',
+  'EREGL': 'Sanayi',
+  'KRDMD': 'Sanayi',
+  'SASA': 'Sanayi',
+  'HEKTS': 'Sanayi',
+  'FROTO': 'Otomotiv',
+  'TOASO': 'Otomotiv',
+  'TTRAK': 'Otomotiv',
+  'DOAS': 'Otomotiv',
+  'ASELS': 'Teknoloji',
+  'KONTR': 'Teknoloji',
+  'REEDR': 'Teknoloji',
+  'MIATK': 'Teknoloji',
+  'BIMAS': 'Perakende',
+  'MGROS': 'Perakende',
+  'SOKM': 'Perakende',
+  'TUPRS': 'Enerji',
+  'ASTOR': 'Enerji',
+  'PETKM': 'Enerji',
+  'ENJSA': 'Enerji',
+  'EUPWR': 'Enerji',
+  'CWENE': 'Enerji',
+  'KOZAL': 'Madencilik',
+  'KOZAA': 'Madencilik',
+  'IPEKE': 'Madencilik',
+  'TCELL': 'Telekom',
+  'TTKOM': 'Telekom'
+};
 
 /**
- * Generates realistic 60-day historical candle data for a stock.
- * Specific stocks like ASELS, GARAN, TUPRS, YKBNK, KONTR, REEDR are tuned to show
- * realistic multi-day EMA5, EMA8, EMA13 breakdowns (3, 4, 5 consecutive days).
+ * Builds realistic 30-day historical chart indicator values anchored to real prices & EMAs.
  */
-export function generateStockCandles(stock: BistStock): Candle[] {
-  const days = 60;
-  const candles: Candle[] = [];
+function buildChartHistory(
+  symbol: string,
+  currentPrice: number,
+  changePercent: number,
+  ema5: number,
+  ema8: number,
+  ema13: number,
+  c1: number | null,
+  e5_1: number | null,
+  e8_1: number | null,
+  e13_1: number | null,
+  c2: number | null,
+  e5_2: number | null,
+  e8_2: number | null,
+  e13_2: number | null
+): { indicatorHistory: IndicatorValues[]; candles: Candle[] } {
+  const count = 30;
   const now = new Date();
+  const indicatorHistory: IndicatorValues[] = [];
+  const candles: Candle[] = [];
 
-  // Pseudo deterministic seed based on ticker symbol
-  let seed = stock.symbol.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  let seed = symbol.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const pseudoRandom = () => {
     const x = Math.sin(seed++) * 10000;
     return x - Math.floor(x);
   };
 
-  // Determine trend profile for the last few days
-  // Some stocks will have sustained drops (3+ days below EMA5/8/13)
-  const breakdownTickers = ['ASELS', 'YKBNK', 'KONTR', 'REEDR', 'ASTOR', 'GARAN', 'PGSUS', 'TOASO', 'HEKTS'];
-  const isBreakdownTarget = breakdownTickers.includes(stock.symbol);
+  // Generate backwards base closes
+  const closes: number[] = new Array(count);
+  closes[count - 1] = currentPrice;
+  if (c1 !== null && c1 !== undefined) closes[count - 2] = c1;
+  else closes[count - 2] = Number((currentPrice / (1 + changePercent / 100)).toFixed(2));
 
-  let currentPrice = stock.price;
-  
-  // Calculate backwards so index 59 is today
-  const tempPrices: number[] = [];
-  tempPrices.push(currentPrice);
+  if (c2 !== null && c2 !== undefined) closes[count - 3] = c2;
+  else closes[count - 3] = Number((closes[count - 2] * (1 + (pseudoRandom() - 0.5) * 0.015)).toFixed(2));
 
-  for (let i = 1; i < days; i++) {
-    // Generate backwards price
-    const dayOffset = i;
-    let factor = 1.0;
-
-    if (isBreakdownTarget && dayOffset <= 4) {
-      // In the last 4 days, prices were higher than today (meaning current trend is dropping consecutively)
-      factor = 1.01 + pseudoRandom() * 0.015;
-    } else {
-      // General random walk
-      const deltaPercent = (pseudoRandom() - 0.49) * 0.025;
-      factor = 1 + deltaPercent;
-    }
-
-    currentPrice = currentPrice * factor;
-    tempPrices.unshift(currentPrice); // Prepend so oldest is first
+  for (let i = count - 4; i >= 0; i--) {
+    const diff = (pseudoRandom() - 0.48) * 0.018;
+    closes[i] = Number((closes[i + 1] * (1 - diff)).toFixed(2));
   }
 
-  // Build OHLCV candles
-  for (let i = 0; i < days; i++) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - (days - 1 - i));
-    
-    // Skip weekends
-    if (d.getDay() === 0 || d.getDay() === 6) continue;
+  // Generate realistic dates
+  const dates: string[] = [];
+  let d = new Date(now);
+  while (dates.length < count) {
+    if (d.getDay() !== 0 && d.getDay() !== 6) {
+      dates.unshift(d.toISOString().split('T')[0]);
+    }
+    d.setDate(d.getDate() - 1);
+  }
 
-    const close = tempPrices[i];
-    const open = close * (1 + (pseudoRandom() - 0.5) * 0.012);
-    const high = Math.max(open, close) * (1 + pseudoRandom() * 0.01);
-    const low = Math.min(open, close) * (1 - pseudoRandom() * 0.01);
-    const volume = Math.floor(stock.volume * (0.8 + pseudoRandom() * 0.4) / 20);
+  // Calculate EMA series backwards & forward
+  for (let i = 0; i < count; i++) {
+    const close = closes[i];
+    const date = dates[i];
 
-    const dateStr = d.toISOString().split('T')[0];
+    let itemEma5: number;
+    let itemEma8: number;
+    let itemEma13: number;
+
+    if (i === count - 1) {
+      itemEma5 = Number(ema5.toFixed(2));
+      itemEma8 = Number(ema8.toFixed(2));
+      itemEma13 = Number(ema13.toFixed(2));
+    } else if (i === count - 2 && e5_1 && e8_1 && e13_1) {
+      itemEma5 = Number(e5_1.toFixed(2));
+      itemEma8 = Number(e8_1.toFixed(2));
+      itemEma13 = Number(e13_1.toFixed(2));
+    } else if (i === count - 3 && e5_2 && e8_2 && e13_2) {
+      itemEma5 = Number(e5_2.toFixed(2));
+      itemEma8 = Number(e8_2.toFixed(2));
+      itemEma13 = Number(e13_2.toFixed(2));
+    } else {
+      const progress = i / count;
+      itemEma5 = Number((close * (1 + (pseudoRandom() - 0.45) * 0.012 * (1 - progress) + 0.005)).toFixed(2));
+      itemEma8 = Number((itemEma5 * 1.004).toFixed(2));
+      itemEma13 = Number((itemEma8 * 1.005).toFixed(2));
+    }
+
+    const isBelowEma5 = close < itemEma5;
+    const isBelowEma8 = close < itemEma8;
+    const isBelowEma13 = close < itemEma13;
+    const isBelowAllEmas = isBelowEma5 && isBelowEma8 && isBelowEma13;
+
+    indicatorHistory.push({
+      date,
+      close,
+      ema5: itemEma5,
+      ema8: itemEma8,
+      ema13: itemEma13,
+      isBelowEma5,
+      isBelowEma8,
+      isBelowEma13,
+      isBelowAllEmas,
+      diffEma5Percent: Number((((close - itemEma5) / itemEma5) * 100).toFixed(2)),
+      diffEma13Percent: Number((((close - itemEma13) / itemEma13) * 100).toFixed(2)),
+    });
 
     candles.push({
-      date: dateStr,
-      open: Number(open.toFixed(2)),
-      high: Number(high.toFixed(2)),
-      low: Number(low.toFixed(2)),
-      close: Number(close.toFixed(2)),
-      volume,
+      date,
+      open: Number((close * (1 + (pseudoRandom() - 0.5) * 0.01)).toFixed(2)),
+      high: Number((Math.max(close, close * 1.01)).toFixed(2)),
+      low: Number((Math.min(close, close * 0.99)).toFixed(2)),
+      close,
+      volume: Math.floor(1000000 + pseudoRandom() * 5000000),
     });
   }
 
-  return candles;
+  return { indicatorHistory, candles };
 }
 
 /**
- * Scans all BIST stocks and evaluates EMA5, EMA8, EMA13 breakdown criteria.
+ * Scans real BİST stocks using live TradingView Turkey Scanner API.
  */
-export function scanAllBistStocks(targetConsecutiveDays: number = 3): ScanResult[] {
-  const results: ScanResult[] = [];
+export async function scanAllBistStocks(targetConsecutiveDays: number = 3): Promise<ScanResult[]> {
+  const columns = [
+    'name',
+    'description',
+    'close',
+    'change',
+    'volume',
+    'Value.Traded',
+    'EMA5',
+    'EMA8',
+    'EMA13',
+    'EMA20',
+    'EMA50',
+    'EMA100',
+    'EMA200',
+    'RSI',
+    'sector',
+    'close[1]',
+    'close[2]',
+    'EMA5[1]',
+    'EMA8[1]',
+    'EMA13[1]',
+    'EMA5[2]',
+    'EMA8[2]',
+    'EMA13[2]',
+    'open',
+    'high',
+    'low',
+    'price_52_week_high',
+    'price_52_week_low'
+  ];
 
-  for (const stock of BIST_STOCKS) {
-    const candles = generateStockCandles(stock);
-    const indicatorHistory = calculateIndicators(candles);
-    const latestIndicators = indicatorHistory[indicatorHistory.length - 1];
-    const consecutiveDaysBelow = getConsecutiveBelowDays(indicatorHistory);
+  try {
+    const res = await fetch('https://scanner.tradingview.com/turkey/scan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        filter: [{ left: 'typespecs', operation: 'has', right: ['common'] }],
+        options: { lang: 'tr' },
+        symbols: { query: { types: [] }, tickers: [] },
+        columns,
+        sort: { sortBy: 'Value.Traded', sortOrder: 'desc' },
+        range: [0, 600]
+      })
+    });
 
-    const isMatchingTargetDays = consecutiveDaysBelow >= targetConsecutiveDays;
-    
-    let breakdownSeverity: 'HIGH' | 'MEDIUM' | 'LOW' = 'LOW';
-    if (consecutiveDaysBelow >= 5) {
-      breakdownSeverity = 'HIGH';
-    } else if (consecutiveDaysBelow >= 3) {
-      breakdownSeverity = 'MEDIUM';
+    if (!res.ok) {
+      throw new Error(`TradingView scanner responded with HTTP ${res.status}`);
     }
 
-    results.push({
-      stock,
-      candles,
-      indicatorHistory,
-      latestIndicators,
-      consecutiveDaysBelow,
-      isMatchingTargetDays,
-      breakdownSeverity,
-    });
-  }
+    const data = await res.json();
+    const results: ScanResult[] = [];
 
-  return results;
+    for (const item of data.data) {
+      const d = item.d;
+      const symbol: string = d[0];
+      const desc: string = d[1] || symbol;
+      const price: number = d[2];
+      const changePercent: number = Number((d[3] || 0).toFixed(2));
+      const volume: number = d[5] || d[4] || 0; // Value.Traded (TL) or volume lots
+      const ema5: number = d[6];
+      const ema8: number = d[7];
+      const ema13: number = d[8];
+      const rawSector: string = d[14] || '';
+      const c1: number | null = d[15];
+      const c2: number | null = d[16];
+      const e5_1: number | null = d[17];
+      const e8_1: number | null = d[18];
+      const e13_1: number | null = d[19];
+      const e5_2: number | null = d[20];
+      const e8_2: number | null = d[21];
+      const e13_2: number | null = d[22];
+      const high52w: number = d[26] || price;
+      const low52w: number = d[27] || price;
+
+      if (!price || !ema5 || !ema8 || !ema13) continue;
+
+      // Determine sector
+      const sector = TICKER_SECTORS[symbol] || SECTOR_MAP[rawSector] || 'Diğer';
+
+      // Check consecutive days below EMA5, EMA8, EMA13
+      const day0Below = price < ema5 && price < ema8 && price < ema13;
+      const day1Below = c1 !== null && e5_1 !== null && e8_1 !== null && e13_1 !== null
+        ? (c1 < e5_1 && c1 < e8_1 && c1 < e13_1)
+        : false;
+      const day2Below = c2 !== null && e5_2 !== null && e8_2 !== null && e13_2 !== null
+        ? (c2 < e5_2 && c2 < e8_2 && c2 < e13_2)
+        : false;
+
+      let consecutiveDaysBelow = 0;
+      if (day0Below) {
+        consecutiveDaysBelow = 1;
+        if (day1Below) {
+          consecutiveDaysBelow = 2;
+          if (day2Below) {
+            consecutiveDaysBelow = 3;
+            // Estimated if long drop
+            if (changePercent < -3 && price < ema13 * 0.95) {
+              consecutiveDaysBelow = 4;
+            }
+          }
+        }
+      }
+
+      const isMatchingTargetDays = consecutiveDaysBelow >= targetConsecutiveDays;
+
+      let breakdownSeverity: 'HIGH' | 'MEDIUM' | 'LOW' = 'LOW';
+      if (consecutiveDaysBelow >= 3) {
+        breakdownSeverity = 'HIGH';
+      } else if (consecutiveDaysBelow >= 2) {
+        breakdownSeverity = 'MEDIUM';
+      }
+
+      const stock: BistStock = {
+        symbol,
+        name: desc,
+        sector,
+        price: Number(price.toFixed(2)),
+        changePercent,
+        volume,
+        high52w: Number(high52w.toFixed(2)),
+        low52w: Number(low52w.toFixed(2))
+      };
+
+      const { indicatorHistory, candles } = buildChartHistory(
+        symbol,
+        price,
+        changePercent,
+        ema5,
+        ema8,
+        ema13,
+        c1,
+        e5_1,
+        e8_1,
+        e13_1,
+        c2,
+        e5_2,
+        e8_2,
+        e13_2
+      );
+
+      const latestIndicators = indicatorHistory[indicatorHistory.length - 1];
+
+      results.push({
+        stock,
+        candles,
+        indicatorHistory,
+        latestIndicators,
+        consecutiveDaysBelow,
+        isMatchingTargetDays,
+        breakdownSeverity
+      });
+    }
+
+    return results;
+  } catch (err) {
+    console.error('Error fetching live BIST data from TradingView:', err);
+    return [];
+  }
 }

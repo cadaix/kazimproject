@@ -66,13 +66,16 @@ export function App() {
   }, []);
 
   // Run Scan when targetDays changes or manual refresh
-  const runScan = () => {
+  const runScan = async () => {
     setIsScanning(true);
-    setTimeout(() => {
-      const results = scanAllBistStocks(filters.targetDays);
+    try {
+      const results = await scanAllBistStocks(filters.targetDays);
       setScanResults(results);
+    } catch (e) {
+      console.error('Scan error:', e);
+    } finally {
       setIsScanning(false);
-    }, 400);
+    }
   };
 
   useEffect(() => {
