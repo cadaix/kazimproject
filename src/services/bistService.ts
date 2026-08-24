@@ -1,4 +1,22 @@
 import type { BistStock, Candle, IndicatorValues, ScanResult } from '../types/stock';
+import compactEodData from '../data/bistEodData.json';
+
+interface CompactStock {
+  s: string;
+  n: string;
+  sec: string;
+  p: number;
+  chg: number;
+  v: number;
+  e5: number;
+  e8: number;
+  e13: number;
+  h52: number;
+  l52: number;
+  days: number;
+  h1: (number | null)[];
+  h2: (number | null)[];
+}
 
 const SECTOR_MAP: Record<string, string> = {
   'Transportation': 'Havacılık',
@@ -21,54 +39,24 @@ const SECTOR_MAP: Record<string, string> = {
   'Commercial Services': 'Holding'
 };
 
-// Known ticker specific sector adjustments
 const TICKER_SECTORS: Record<string, string> = {
-  'THYAO': 'Havacılık',
-  'PGSUS': 'Havacılık',
-  'TAVHL': 'Havacılık',
-  'GARAN': 'Bankacılık',
-  'AKBNK': 'Bankacılık',
-  'ISCTR': 'Bankacılık',
-  'YKBNK': 'Bankacılık',
-  'VAKBN': 'Bankacılık',
-  'HALKB': 'Bankacılık',
-  'KCHOL': 'Holding',
-  'SAHOL': 'Holding',
-  'ALARK': 'Holding',
-  'DOHOL': 'Holding',
-  'SISE': 'Sanayi',
-  'EREGL': 'Sanayi',
-  'KRDMD': 'Sanayi',
-  'SASA': 'Sanayi',
-  'HEKTS': 'Sanayi',
-  'FROTO': 'Otomotiv',
-  'TOASO': 'Otomotiv',
-  'TTRAK': 'Otomotiv',
-  'DOAS': 'Otomotiv',
-  'ASELS': 'Teknoloji',
-  'KONTR': 'Teknoloji',
-  'REEDR': 'Teknoloji',
-  'MIATK': 'Teknoloji',
-  'BIMAS': 'Perakende',
-  'MGROS': 'Perakende',
-  'SOKM': 'Perakende',
-  'TUPRS': 'Enerji',
-  'ASTOR': 'Enerji',
-  'PETKM': 'Enerji',
-  'ENJSA': 'Enerji',
-  'EUPWR': 'Enerji',
-  'CWENE': 'Enerji',
-  'KOZAL': 'Madencilik',
-  'KOZAA': 'Madencilik',
-  'IPEKE': 'Madencilik',
-  'TCELL': 'Telekom',
-  'TTKOM': 'Telekom'
+  'THYAO': 'Havacılık', 'PGSUS': 'Havacılık', 'TAVHL': 'Havacılık',
+  'GARAN': 'Bankacılık', 'AKBNK': 'Bankacılık', 'ISCTR': 'Bankacılık',
+  'YKBNK': 'Bankacılık', 'VAKBN': 'Bankacılık', 'HALKB': 'Bankacılık',
+  'KCHOL': 'Holding', 'SAHOL': 'Holding', 'ALARK': 'Holding', 'DOHOL': 'Holding',
+  'SISE': 'Sanayi', 'EREGL': 'Sanayi', 'KRDMD': 'Sanayi', 'SASA': 'Sanayi', 'HEKTS': 'Sanayi',
+  'FROTO': 'Otomotiv', 'TOASO': 'Otomotiv', 'TTRAK': 'Otomotiv', 'DOAS': 'Otomotiv',
+  'ASELS': 'Teknoloji', 'KONTR': 'Teknoloji', 'REEDR': 'Teknoloji', 'MIATK': 'Teknoloji',
+  'BIMAS': 'Perakende', 'MGROS': 'Perakende', 'SOKM': 'Perakende',
+  'TUPRS': 'Enerji', 'ASTOR': 'Enerji', 'PETKM': 'Enerji', 'ENJSA': 'Enerji', 'EUPWR': 'Enerji', 'CWENE': 'Enerji',
+  'KOZAL': 'Madencilik', 'KOZAA': 'Madencilik', 'IPEKE': 'Madencilik',
+  'TCELL': 'Telekom', 'TTKOM': 'Telekom'
 };
 
 /**
  * Builds realistic 30-day historical chart indicator values anchored to real prices & EMAs.
  */
-function buildChartHistory(
+export function buildChartHistory(
   symbol: string,
   currentPrice: number,
   changePercent: number,
@@ -95,7 +83,6 @@ function buildChartHistory(
     return x - Math.floor(x);
   };
 
-  // Generate backwards base closes
   const closes: number[] = new Array(count);
   closes[count - 1] = currentPrice;
   if (c1 !== null && c1 !== undefined) closes[count - 2] = c1;
@@ -109,7 +96,6 @@ function buildChartHistory(
     closes[i] = Number((closes[i + 1] * (1 - diff)).toFixed(2));
   }
 
-  // Generate realistic dates
   const dates: string[] = [];
   let d = new Date(now);
   while (dates.length < count) {
@@ -119,7 +105,6 @@ function buildChartHistory(
     d.setDate(d.getDate() - 1);
   }
 
-  // Calculate EMA series backwards & forward
   for (let i = 0; i < count; i++) {
     const close = closes[i];
     const date = dates[i];
@@ -179,39 +164,90 @@ function buildChartHistory(
   return { indicatorHistory, candles };
 }
 
+function parseCompactStock(cs: CompactStock, targetConsecutiveDays: number): ScanResult {
+  const stock: BistStock = {
+    symbol: cs.s,
+    name: cs.n,
+    sector: cs.sec,
+    price: cs.p,
+    changePercent: cs.chg,
+    volume: cs.v,
+    high52w: cs.h52,
+    low52w: cs.l52
+  };
+
+  const diffEma5Percent = Number((((cs.p - cs.e5) / cs.e5) * 100).toFixed(2));
+  const diffEma13Percent = Number((((cs.p - cs.e13) / cs.e13) * 100).toFixed(2));
+
+  const isBelowEma5 = cs.p < cs.e5;
+  const isBelowEma8 = cs.p < cs.e8;
+  const isBelowEma13 = cs.p < cs.e13;
+  const isBelowAllEmas = isBelowEma5 && isBelowEma8 && isBelowEma13;
+
+  const nowStr = new Date().toISOString().split('T')[0];
+
+  const latestIndicators: IndicatorValues = {
+    date: nowStr,
+    close: cs.p,
+    ema5: cs.e5,
+    ema8: cs.e8,
+    ema13: cs.e13,
+    isBelowEma5,
+    isBelowEma8,
+    isBelowEma13,
+    isBelowAllEmas,
+    diffEma5Percent,
+    diffEma13Percent
+  };
+
+  let breakdownSeverity: 'HIGH' | 'MEDIUM' | 'LOW' = 'LOW';
+  if (cs.days >= 3) breakdownSeverity = 'HIGH';
+  else if (cs.days >= 2) breakdownSeverity = 'MEDIUM';
+
+  const { indicatorHistory, candles } = buildChartHistory(
+    cs.s,
+    cs.p,
+    cs.chg,
+    cs.e5,
+    cs.e8,
+    cs.e13,
+    cs.h1[0],
+    cs.h1[1],
+    cs.h1[2],
+    cs.h1[3],
+    cs.h2[0],
+    cs.h2[1],
+    cs.h2[2],
+    cs.h2[3]
+  );
+
+  return {
+    stock,
+    candles,
+    indicatorHistory,
+    latestIndicators,
+    consecutiveDaysBelow: cs.days,
+    isMatchingTargetDays: cs.days >= targetConsecutiveDays,
+    breakdownSeverity
+  };
+}
+
+// In-memory dataset
+const defaultEodResults: ScanResult[] = (compactEodData as CompactStock[]).map(cs => parseCompactStock(cs, 3));
+let cachedResults: ScanResult[] = defaultEodResults;
+
 /**
- * Scans real BİST stocks using live TradingView Turkey Scanner API.
+ * Scans BİST stocks. Defaults to real Gün Sonu (EOD) pre-calculated dataset
+ * with live background refresh from /api/scan when online.
  */
 export async function scanAllBistStocks(targetConsecutiveDays: number = 3): Promise<ScanResult[]> {
   const columns = [
-    'name',
-    'description',
-    'close',
-    'change',
-    'volume',
-    'Value.Traded',
-    'EMA5',
-    'EMA8',
-    'EMA13',
-    'EMA20',
-    'EMA50',
-    'EMA100',
-    'EMA200',
-    'RSI',
-    'sector',
-    'close[1]',
-    'close[2]',
-    'EMA5[1]',
-    'EMA8[1]',
-    'EMA13[1]',
-    'EMA5[2]',
-    'EMA8[2]',
-    'EMA13[2]',
-    'open',
-    'high',
-    'low',
-    'price_52_week_high',
-    'price_52_week_low'
+    'name', 'description', 'close', 'change', 'volume', 'Value.Traded',
+    'EMA5', 'EMA8', 'EMA13', 'EMA20', 'EMA50', 'EMA100', 'EMA200', 'RSI',
+    'sector', 'close[1]', 'close[2]',
+    'EMA5[1]', 'EMA8[1]', 'EMA13[1]',
+    'EMA5[2]', 'EMA8[2]', 'EMA13[2]',
+    'open', 'high', 'low', 'price_52_week_high', 'price_52_week_low'
   ];
 
   const payload = JSON.stringify({
@@ -230,117 +266,118 @@ export async function scanAllBistStocks(targetConsecutiveDays: number = 3): Prom
       body: payload
     });
 
-    if (!res.ok) {
-      throw new Error(`API scan responded with HTTP ${res.status}`);
-    }
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
+        const freshResults: ScanResult[] = [];
 
-    const data = await res.json();
-    const results: ScanResult[] = [];
+        for (const item of data.data) {
+          const d = item.d;
+          const symbol: string = d[0];
+          const desc: string = d[1] || symbol;
+          const price: number = d[2];
+          const changePercent: number = Number((d[3] || 0).toFixed(2));
+          const volume: number = d[5] || d[4] || 0;
+          const ema5 = Number(Number(d[6]).toFixed(2));
+          const ema8 = Number(Number(d[7]).toFixed(2));
+          const ema13 = Number(Number(d[8]).toFixed(2));
+          const rawSector: string = d[14] || '';
+          const c1: number | null = d[15];
+          const c2: number | null = d[16];
+          const e5_1: number | null = d[17];
+          const e8_1: number | null = d[18];
+          const e13_1: number | null = d[19];
+          const e5_2: number | null = d[20];
+          const e8_2: number | null = d[21];
+          const e13_2: number | null = d[22];
+          const high52w: number = Number((d[26] || price).toFixed(2));
+          const low52w: number = Number((d[27] || price).toFixed(2));
 
-    for (const item of data.data) {
-      const d = item.d;
-      const symbol: string = d[0];
-      const desc: string = d[1] || symbol;
-      const price: number = d[2];
-      const changePercent: number = Number((d[3] || 0).toFixed(2));
-      const volume: number = d[5] || d[4] || 0; // Value.Traded (TL) or volume lots
-      const ema5: number = d[6];
-      const ema8: number = d[7];
-      const ema13: number = d[8];
-      const rawSector: string = d[14] || '';
-      const c1: number | null = d[15];
-      const c2: number | null = d[16];
-      const e5_1: number | null = d[17];
-      const e8_1: number | null = d[18];
-      const e13_1: number | null = d[19];
-      const e5_2: number | null = d[20];
-      const e8_2: number | null = d[21];
-      const e13_2: number | null = d[22];
-      const high52w: number = d[26] || price;
-      const low52w: number = d[27] || price;
+          if (!price || !ema5 || !ema8 || !ema13) continue;
 
-      if (!price || !ema5 || !ema8 || !ema13) continue;
+          const sector = TICKER_SECTORS[symbol] || SECTOR_MAP[rawSector] || 'Diğer';
 
-      // Determine sector
-      const sector = TICKER_SECTORS[symbol] || SECTOR_MAP[rawSector] || 'Diğer';
+          const day0Below = price < ema5 && price < ema8 && price < ema13;
+          const day1Below = c1 !== null && e5_1 !== null && e8_1 !== null && e13_1 !== null
+            ? (c1 < e5_1 && c1 < e8_1 && c1 < e13_1)
+            : false;
+          const day2Below = c2 !== null && e5_2 !== null && e8_2 !== null && e13_2 !== null
+            ? (c2 < e5_2 && c2 < e8_2 && c2 < e13_2)
+            : false;
 
-      // Check consecutive days below EMA5, EMA8, EMA13
-      const day0Below = price < ema5 && price < ema8 && price < ema13;
-      const day1Below = c1 !== null && e5_1 !== null && e8_1 !== null && e13_1 !== null
-        ? (c1 < e5_1 && c1 < e8_1 && c1 < e13_1)
-        : false;
-      const day2Below = c2 !== null && e5_2 !== null && e8_2 !== null && e13_2 !== null
-        ? (c2 < e5_2 && c2 < e8_2 && c2 < e13_2)
-        : false;
-
-      let consecutiveDaysBelow = 0;
-      if (day0Below) {
-        consecutiveDaysBelow = 1;
-        if (day1Below) {
-          consecutiveDaysBelow = 2;
-          if (day2Below) {
-            consecutiveDaysBelow = 3;
-            // Estimated if long drop
-            if (changePercent < -3 && price < ema13 * 0.95) {
-              consecutiveDaysBelow = 4;
+          let consecutiveDaysBelow = 0;
+          if (day0Below) {
+            consecutiveDaysBelow = 1;
+            if (day1Below) {
+              consecutiveDaysBelow = 2;
+              if (day2Below) {
+                consecutiveDaysBelow = 3;
+                if (changePercent < -3 && price < ema13 * 0.95) {
+                  consecutiveDaysBelow = 4;
+                }
+              }
             }
           }
+
+          let breakdownSeverity: 'HIGH' | 'MEDIUM' | 'LOW' = 'LOW';
+          if (consecutiveDaysBelow >= 3) breakdownSeverity = 'HIGH';
+          else if (consecutiveDaysBelow >= 2) breakdownSeverity = 'MEDIUM';
+
+          const stock: BistStock = {
+            symbol,
+            name: desc,
+            sector,
+            price: Number(price.toFixed(2)),
+            changePercent,
+            volume,
+            high52w,
+            low52w
+          };
+
+          const { indicatorHistory, candles } = buildChartHistory(
+            symbol, price, changePercent, ema5, ema8, ema13,
+            c1, e5_1, e8_1, e13_1, c2, e5_2, e8_2, e13_2
+          );
+
+          const diffEma5Percent = Number((((price - ema5) / ema5) * 100).toFixed(2));
+          const diffEma13Percent = Number((((price - ema13) / ema13) * 100).toFixed(2));
+
+          const latestIndicators: IndicatorValues = {
+            date: new Date().toISOString().split('T')[0],
+            close: price,
+            ema5,
+            ema8,
+            ema13,
+            isBelowEma5: price < ema5,
+            isBelowEma8: price < ema8,
+            isBelowEma13: price < ema13,
+            isBelowAllEmas: day0Below,
+            diffEma5Percent,
+            diffEma13Percent
+          };
+
+          freshResults.push({
+            stock,
+            candles,
+            indicatorHistory,
+            latestIndicators,
+            consecutiveDaysBelow,
+            isMatchingTargetDays: consecutiveDaysBelow >= targetConsecutiveDays,
+            breakdownSeverity
+          });
+        }
+
+        if (freshResults.length > 0) {
+          cachedResults = freshResults;
         }
       }
-
-      const isMatchingTargetDays = consecutiveDaysBelow >= targetConsecutiveDays;
-
-      let breakdownSeverity: 'HIGH' | 'MEDIUM' | 'LOW' = 'LOW';
-      if (consecutiveDaysBelow >= 3) {
-        breakdownSeverity = 'HIGH';
-      } else if (consecutiveDaysBelow >= 2) {
-        breakdownSeverity = 'MEDIUM';
-      }
-
-      const stock: BistStock = {
-        symbol,
-        name: desc,
-        sector,
-        price: Number(price.toFixed(2)),
-        changePercent,
-        volume,
-        high52w: Number(high52w.toFixed(2)),
-        low52w: Number(low52w.toFixed(2))
-      };
-
-      const { indicatorHistory, candles } = buildChartHistory(
-        symbol,
-        price,
-        changePercent,
-        ema5,
-        ema8,
-        ema13,
-        c1,
-        e5_1,
-        e8_1,
-        e13_1,
-        c2,
-        e5_2,
-        e8_2,
-        e13_2
-      );
-
-      const latestIndicators = indicatorHistory[indicatorHistory.length - 1];
-
-      results.push({
-        stock,
-        candles,
-        indicatorHistory,
-        latestIndicators,
-        consecutiveDaysBelow,
-        isMatchingTargetDays,
-        breakdownSeverity
-      });
     }
-
-    return results;
   } catch (err) {
-    console.error('Error fetching live BIST data from TradingView:', err);
-    return [];
+    console.warn('Live scan fallback to EOD dataset:', err);
   }
+
+  return cachedResults.map((item) => ({
+    ...item,
+    isMatchingTargetDays: item.consecutiveDaysBelow >= targetConsecutiveDays,
+  }));
 }
