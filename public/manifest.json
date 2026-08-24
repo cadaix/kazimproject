@@ -1,0 +1,22 @@
+{
+  "short_name": "BİST EMA3",
+  "name": "BİST EMA5-8-13 Kapanış Tarayıcısı",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0b0f19",
+  "theme_color": "#0f172a",
+  "display": "standalone",
+  "orientation": "portrait",
+  "description": "EMA 5, EMA 8 ve EMA 13 altında 3 gün üst üste kapanış yapan BİST hisseleri tarama uygulaması"
+}
