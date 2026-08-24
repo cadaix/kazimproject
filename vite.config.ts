@@ -8,4 +8,13 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    proxy: {
+      '/api/tv-scan': {
+        target: 'https://scanner.tradingview.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/tv-scan/, '/turkey/scan')
+      }
+    }
+  }
 })

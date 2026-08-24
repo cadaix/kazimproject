@@ -214,19 +214,33 @@ export async function scanAllBistStocks(targetConsecutiveDays: number = 3): Prom
     'price_52_week_low'
   ];
 
+  const payload = JSON.stringify({
+    filter: [{ left: 'typespecs', operation: 'has', right: ['common'] }],
+    options: { lang: 'tr' },
+    symbols: { query: { types: [] }, tickers: [] },
+    columns,
+    sort: { sortBy: 'Value.Traded', sortOrder: 'desc' },
+    range: [0, 600]
+  });
+
   try {
-    const res = await fetch('https://scanner.tradingview.com/turkey/scan', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        filter: [{ left: 'typespecs', operation: 'has', right: ['common'] }],
-        options: { lang: 'tr' },
-        symbols: { query: { types: [] }, tickers: [] },
-        columns,
-        sort: { sortBy: 'Value.Traded', sortOrder: 'desc' },
-        range: [0, 600]
-      })
-    });
+    let res: Response;
+    try {
+      // 1. Try local/Vercel proxy route
+      res = await fetch('/api/tv-scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload
+      });
+      if (!res.ok) throw new Error(`Proxy HTTP ${res.status}`);
+    } catch {
+      // 2. Fallback: Direct TradingView with text/plain (avoids CORS preflight)
+      res = await fetch('https://scanner.tradingview.com/turkey/scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: payload
+      });
+    }
 
     if (!res.ok) {
       throw new Error(`TradingView scanner responded with HTTP ${res.status}`);

@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/tv-scan",
+      "destination": "https://scanner.tradingview.com/turkey/scan"
+    }
+  ]
+}
